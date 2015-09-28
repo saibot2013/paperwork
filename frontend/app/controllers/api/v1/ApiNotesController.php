@@ -135,7 +135,8 @@ class ApiNotesController extends BaseController
         $notes = DB::table('notes')
                    ->join('note_user', function ($join) {
                        $join->on('notes.id', '=', 'note_user.note_id')
-                            ->where('note_user.user_id', '=', Auth::user()->id);
+                            ->where('note_user.user_id', '=', Auth::user()->id)
+                            ->where('note_user.umask', '>', 0);
                    })
                    ->join('notebooks', function ($join) {
                        $join->on('notes.notebook_id', '=', 'notebooks.id');
@@ -600,7 +601,7 @@ class ApiNotesController extends BaseController
         $status    = PaperworkHelpers::STATUS_SUCCESS;
         foreach ($noteIds as $singleNoteId) {
             for($i=0; $i<count($toUserIds); $i++){//adding a loop to share with multiple users
-                $tmp = $this->shareNote($notebookId, $singleNoteId, $toUserIds[$i], $toUMASK[$i]);
+                $tmp = $this->shareNote($notebookId, $singleNoteId, $toUserIds[$i], $toUMASKs[$i]);
                 if (is_null($tmp)) {
                     $status      = PaperworkHelpers::STATUS_ERROR;
                     $responses[] = array('error_id' => $singleNoteId, 'error_user' => $toUserIds[$i]);

@@ -59,18 +59,28 @@ class UserController extends BaseController
                     'password_confirmation', 'ui_language'),
                     Input::get('ui_language'));
             }
-            if ($user) {
+            if ($user && !(Input::get('frominstaller'))) {
                 Auth::login($user);
 
                 Session::put('ui_language', Input::get('ui_language'));
 
                 return Redirect::route("/");
+            }else if($user) {
+                return PaperworkHelpers::apiResponse(PaperworkHelpers::STATUS_SUCCESS, array());
             }
 
-            return Redirect::back()
+            if(!(Input::get('frominstaller'))) {
+                return Redirect::back()
                            ->withErrors(["password" => [Lang::get('messages.account_creation_failed')]]);
+            }else{
+                return PaperworkHelpers::apiResponse(PaperworkHelpers::STATUS_ERROR, ["password" => [Lang::get('messages.account_creation_failed')]]);
+            }
         } else {
-            return Redirect::back()->withInput()->withErrors($validator);
+            if(!(Input::get('frominstaller'))) {
+                return Redirect::back()->withInput()->withErrors($validator);
+            }else{
+                return PaperworkHelpers::apiResponse(PaperworkHelpers::STATUS_ERROR, $validator->failed());
+            }
         }
     }
 
@@ -387,7 +397,7 @@ class UserController extends BaseController
                    ->join('note_user', function ($join) {
                        $join->on('notes.id', '=', 'note_user.note_id')
                             ->where('note_user.user_id', '=', Auth::user()->id)
-                            ->where('note_user.umask', '=', '0');
+                            ->where('note_user.umask', '=', '7');
                    })
                    ->join('notebooks', function ($join) {
                        $join->on('notes.notebook_id', '=', 'notebooks.id');
@@ -468,7 +478,9 @@ class UserController extends BaseController
 
             if ($noteNumber == 1) {
                 $noteArray['start'] = 1;
-            } elseif ($noteNumber == $noteCount) {
+            } 
+            
+            if ($noteNumber == $noteCount) {
                 $noteArray['end'] = 1;
             }
 
